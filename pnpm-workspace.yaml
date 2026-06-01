@@ -1,0 +1,8 @@
+packages:
+  - 'apps/**'
+  - 'packages/**'
+
+exclude:
+  - '**/node_modules'
+  - '**/dist'
+  - '**/.git'
