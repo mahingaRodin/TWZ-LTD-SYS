@@ -1,0 +1,8 @@
+{
+  "name": "@fire-system/db-migrations",
+  "version": "1.0.0",
+  "description": "Database migrations using Flyway",
+  "scripts": {
+    "migrate": "echo 'Run Flyway migrations'"
+  }
+}

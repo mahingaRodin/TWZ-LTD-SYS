@@ -1,0 +1,12 @@
+{
+  "name": "@fire-system/shared-constants",
+  "version": "1.0.0",
+  "description": "Shared constants across services",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^5.2.2"
+  }
+}

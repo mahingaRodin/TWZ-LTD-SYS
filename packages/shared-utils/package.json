@@ -1,0 +1,16 @@
+{
+  "name": "@fire-system/shared-utils",
+  "version": "1.0.0",
+  "description": "Shared utility functions",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "zod": "^3.22.4",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.2.2"
+  }
+}
