@@ -76,9 +76,24 @@ pnpm run build
 ### Testing
 
 ```bash
-# Run all tests
+# Run all tests (unit + integration)
 pnpm run test
 ```
+
+The `shared-utils` unit tests (password hashing, JWT, token helpers) run with no
+external dependencies. The auth-service **integration tests** (Supertest against
+the real Express app) require PostgreSQL — they use a dedicated `fire_extinguisher_test`
+database so they never touch development data:
+
+```bash
+pnpm run db:up                                    # start PostgreSQL
+docker exec fire-extinguisher-db \
+  createdb -U admin fire_extinguisher_test         # one-time: create the test DB
+pnpm --filter @fire-system/auth-service test       # runs migrations + the auth flow suite
+```
+
+The test suite applies the SQL migration itself and truncates tables between cases,
+so it is self-contained once the (empty) test database exists.
 
 ### Linting
 
@@ -89,11 +104,34 @@ pnpm run lint
 
 ## Services Overview
 
-### Auth Service (Port 3001)
-- User authentication and authorization
-- JWT token management
-- OTP generation and verification
-- User management endpoints
+### Auth Service (Port 3001) — fully implemented
+
+The auth service is the reference implementation; the other services follow the
+same layered structure (`config → db → repository → service → controller → routes`,
+with shared middleware for auth, validation, and error handling).
+
+- Email/password registration with bcrypt password hashing
+- JWT access tokens (short-lived) + rotating opaque refresh tokens (hashed at rest)
+- OTP generation/verification for email verification and password reset
+- Zod request validation and a consistent `{ success, data | error }` response envelope
+- Role-based authorization middleware (`ADMIN`, `TECHNICIAN`, `CUSTOMER`)
+
+#### Endpoints (`/api/auth`)
+
+| Method | Path                | Auth   | Description                          |
+|--------|---------------------|--------|--------------------------------------|
+| POST   | `/register`         | —      | Create an account, returns tokens    |
+| POST   | `/login`            | —      | Authenticate, returns tokens         |
+| POST   | `/refresh`          | —      | Rotate refresh token → new token pair |
+| POST   | `/logout`           | —      | Revoke a refresh token               |
+| POST   | `/otp/request`      | —      | Request an OTP (verification/reset)  |
+| POST   | `/otp/verify`       | —      | Verify an OTP                        |
+| POST   | `/password/reset`   | —      | Reset password using a PASSWORD_RESET OTP |
+| GET    | `/me`               | Bearer | Current user profile                 |
+| POST   | `/password/change`  | Bearer | Change password (knows current one)  |
+
+> Outside `NODE_ENV=production`, OTP-issuing responses include the code as
+> `devOtp` so flows are easy to test without a mail/SMS provider.
 
 ### Customer Service (Port 3002)
 - Customer CRUD operations
@@ -121,10 +159,14 @@ pnpm run lint
 
 ## Shared Packages
 
-- **shared-types**: Common TypeScript interfaces and types
-- **shared-constants**: Application-wide constants
-- **shared-utils**: Reusable utility functions
-- **db-migrations**: Database migration scripts
+- **shared-types**: Common TypeScript interfaces and types (User, roles, DTOs, API envelope)
+- **shared-constants**: Application-wide constants (HTTP status, error codes, auth tunables)
+- **shared-utils**: Reusable utilities (bcrypt hashing, JWT, OTP/token helpers, logger, errors)
+- **db-migrations**: Forward-only SQL migration runner (`V*__*.sql` files, tracked in `schema_migrations`)
+
+> The migration runner is a small Node/`pg` script (`pnpm run db:migrate`) — it
+> applies each pending `V*.sql` file in a transaction and records it, so it is
+> safe to re-run.
 
 ## Environment Configuration
 

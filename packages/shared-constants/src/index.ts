@@ -1,1 +1,59 @@
-export {};
+/**
+ * Application-wide constants shared across all services.
+ */
+
+export const SERVICE_PORTS = {
+  AUTH: 3001,
+  CUSTOMER: 3002,
+  EXTINGUISHER: 3003,
+  NOTIFICATION: 3004,
+  COMPLIANCE: 3005,
+  FRONTEND: 3000,
+} as const;
+
+/** HTTP status codes used throughout the API. */
+export const HTTP_STATUS = {
+  OK: 200,
+  CREATED: 201,
+  NO_CONTENT: 204,
+  BAD_REQUEST: 400,
+  UNAUTHORIZED: 401,
+  FORBIDDEN: 403,
+  NOT_FOUND: 404,
+  CONFLICT: 409,
+  UNPROCESSABLE_ENTITY: 422,
+  TOO_MANY_REQUESTS: 429,
+  INTERNAL_SERVER_ERROR: 500,
+} as const;
+
+/** Machine-readable error codes returned in the API error envelope. */
+export const ERROR_CODES = {
+  VALIDATION_ERROR: 'VALIDATION_ERROR',
+  UNAUTHORIZED: 'UNAUTHORIZED',
+  FORBIDDEN: 'FORBIDDEN',
+  NOT_FOUND: 'NOT_FOUND',
+  CONFLICT: 'CONFLICT',
+  INVALID_CREDENTIALS: 'INVALID_CREDENTIALS',
+  INVALID_TOKEN: 'INVALID_TOKEN',
+  TOKEN_EXPIRED: 'TOKEN_EXPIRED',
+  OTP_INVALID: 'OTP_INVALID',
+  OTP_EXPIRED: 'OTP_EXPIRED',
+  ACCOUNT_INACTIVE: 'ACCOUNT_INACTIVE',
+  INTERNAL_ERROR: 'INTERNAL_ERROR',
+} as const;
+
+/** Authentication / security tunables. */
+export const AUTH = {
+  BCRYPT_SALT_ROUNDS: 10,
+  ACCESS_TOKEN_TTL: '15m',
+  REFRESH_TOKEN_TTL_DAYS: 7,
+  OTP_LENGTH: 6,
+  OTP_TTL_MINUTES: 10,
+  MIN_PASSWORD_LENGTH: 8,
+} as const;
+
+export const PAGINATION = {
+  DEFAULT_PAGE: 1,
+  DEFAULT_PAGE_SIZE: 20,
+  MAX_PAGE_SIZE: 100,
+} as const;

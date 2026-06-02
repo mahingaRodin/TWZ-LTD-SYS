@@ -4,14 +4,17 @@
   "description": "Production-ready Fire Extinguisher Lifecycle Management System",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"npm run dev:services\" \"npm run dev:frontend\"",
-    "dev:services": "concurrently --names=\"auth,customer,extinguisher,notification,compliance\" \"npm run dev -w @fire-system/auth-service\" \"npm run dev -w @fire-system/customer-service\" \"npm run dev -w @fire-system/extinguisher-service\" \"npm run dev -w @fire-system/notification-service\" \"npm run dev -w @fire-system/compliance-service\"",
-    "dev:frontend": "npm run dev -w @fire-system/frontend",
     "build": "pnpm -r build",
+    "build:packages": "pnpm --filter \"./packages/**\" -r build",
+    "dev": "concurrently \"pnpm run dev:services\" \"pnpm run dev:frontend\"",
+    "dev:services": "concurrently --names=\"auth,customer,extinguisher,notification,compliance\" \"pnpm --filter @fire-system/auth-service dev\" \"pnpm --filter @fire-system/customer-service dev\" \"pnpm --filter @fire-system/extinguisher-service dev\" \"pnpm --filter @fire-system/notification-service dev\" \"pnpm --filter @fire-system/compliance-service dev\"",
+    "predev:services": "pnpm run build:packages",
+    "dev:frontend": "pnpm --filter @fire-system/frontend dev",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
-    "db:migrate": "npm run migrate -w @fire-system/db-migrations",
-    "db:up": "docker-compose up -d postgres"
+    "db:migrate": "pnpm --filter @fire-system/db-migrations migrate",
+    "db:up": "docker-compose up -d postgres",
+    "db:down": "docker-compose down"
   },
   "devDependencies": {
     "concurrently": "^8.2.1"
