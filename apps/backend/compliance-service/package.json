@@ -1,13 +1,13 @@
 {
   "name": "@fire-system/compliance-service",
   "version": "1.0.0",
-  "description": "Compliance Service - Reports, escalation, audit trail",
+  "description": "Compliance Service - real-time reports, PDF/CSV export, audit",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "jest",
+    "test": "pnpm --filter @fire-system/api-tests test -- --testPathPattern=compliance",
     "lint": "eslint src/"
   },
   "dependencies": {
@@ -16,19 +16,22 @@
     "dotenv": "^16.3.1",
     "pg": "^8.11.3",
     "zod": "^3.22.4",
-    "jsonwebtoken": "^9.0.2",
-    "axios": "^1.6.2",
-    "winston": "^3.11.0",
+    "pdfkit": "^0.14.0",
+    "swagger-ui-express": "^5.0.0",
     "@fire-system/shared-types": "workspace:*",
     "@fire-system/shared-constants": "workspace:*",
-    "@fire-system/shared-utils": "workspace:*"
+    "@fire-system/shared-utils": "workspace:*",
+    "@fire-system/openapi": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.2.2",
     "tsx": "^4.1.0",
     "@types/express": "^4.17.20",
+    "@types/cors": "^2.8.15",
     "@types/node": "^20.8.9",
     "@types/pg": "^8.10.7",
+    "@types/pdfkit": "^0.13.4",
+    "@types/swagger-ui-express": "^4.1.6",
     "eslint": "^8.51.0",
     "@typescript-eslint/eslint-plugin": "^6.7.5",
     "@typescript-eslint/parser": "^6.7.5"

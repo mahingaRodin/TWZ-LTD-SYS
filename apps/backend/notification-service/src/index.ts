@@ -1,7 +1,10 @@
 import app from './app';
+import { env, smtpConfigured } from './config/env';
+import { logger } from './utils/logger';
 
-const PORT = process.env.NOTIFICATION_SERVICE_PORT || 4004;
-
-app.listen(PORT, () => {
-  console.log(`Notification Service running on port ${PORT}`);
+app.listen(env.NOTIFICATION_SERVICE_PORT, () => {
+  logger.info(`Notification Service listening on port ${env.NOTIFICATION_SERVICE_PORT}`);
+  if (!smtpConfigured) {
+    logger.warn('SMTP not configured — emails will be logged, not delivered.');
+  }
 });
