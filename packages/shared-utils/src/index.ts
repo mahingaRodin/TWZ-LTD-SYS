@@ -4,3 +4,7 @@ export * from './jwt';
 export * from './tokens';
 export * from './response';
 export * from './logger';
+export * from './db';
+export * from './middleware';
+export * from './emailTemplates';
+export * from './validation';

@@ -1,25 +1,31 @@
 /**
  * Shared TypeScript types and interfaces used across all services.
+ * This package is the single source of truth for domain shapes and the
+ * request/response contracts exchanged over the REST APIs.
  */
 
 // ----------------------------------------------------------------------------
-// Domain
+// Users & auth
 // ----------------------------------------------------------------------------
 
 export enum UserRole {
+  /** Manages system features, user accounts, and data integrity. */
   ADMIN = 'ADMIN',
-  TECHNICIAN = 'TECHNICIAN',
-  CUSTOMER = 'CUSTOMER',
+  /** Conducts inspections, logs results, schedules maintenance. */
+  INSPECTOR = 'INSPECTOR',
+  /** Views extinguisher status and schedules inspections. */
+  USER = 'USER',
 }
 
 export interface User {
   id: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  fullName: string;
-  phone: string | null;
   role: UserRole;
   isVerified: boolean;
   isActive: boolean;
+  mustChangePassword: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -36,10 +42,6 @@ export enum OtpPurpose {
   EMAIL_VERIFICATION = 'EMAIL_VERIFICATION',
   PASSWORD_RESET = 'PASSWORD_RESET',
 }
-
-// ----------------------------------------------------------------------------
-// Auth / tokens
-// ----------------------------------------------------------------------------
 
 export interface JwtPayload {
   sub: string; // user id
@@ -58,44 +60,139 @@ export interface AuthResult {
 }
 
 // ----------------------------------------------------------------------------
-// API request DTOs
+// Fire extinguishers
 // ----------------------------------------------------------------------------
 
-export interface RegisterDto {
-  email: string;
-  password: string;
-  fullName: string;
-  phone?: string;
-  role?: UserRole;
+export enum ExtinguisherType {
+  WATER = 'WATER',
+  CO2 = 'CO2',
+  FOAM = 'FOAM',
+  DRY_CHEMICAL = 'DRY_CHEMICAL',
 }
 
-export interface LoginDto {
-  email: string;
-  password: string;
+/** Cylinder sizes. Kept as string literals because they start with digits. */
+export const EXTINGUISHER_SIZES = ['2.5lbs', '5lbs', '9lbs', '12lbs'] as const;
+export type ExtinguisherSize = (typeof EXTINGUISHER_SIZES)[number];
+
+export enum ExtinguisherStatus {
+  ACTIVE = 'ACTIVE',
+  EXPIRED = 'EXPIRED',
+  MAINTENANCE = 'MAINTENANCE',
+  DECOMMISSIONED = 'DECOMMISSIONED',
 }
 
-export interface RefreshDto {
-  refreshToken: string;
-}
-
-export interface RequestOtpDto {
-  email: string;
-  purpose: OtpPurpose;
-}
-
-export interface VerifyOtpDto {
-  email: string;
-  code: string;
-  purpose: OtpPurpose;
-}
-
-export interface ChangePasswordDto {
-  currentPassword: string;
-  newPassword: string;
+export interface Extinguisher {
+  id: string;
+  serialNumber: string;
+  location: string;
+  type: ExtinguisherType;
+  size: ExtinguisherSize;
+  installationDate: string; // ISO date (YYYY-MM-DD)
+  expiryDate: string; // ISO date (YYYY-MM-DD)
+  status: ExtinguisherStatus;
+  createdBy: string | null;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // ----------------------------------------------------------------------------
-// API response envelope
+// Inspections
+// ----------------------------------------------------------------------------
+
+export enum InspectionStatus {
+  SCHEDULED = 'SCHEDULED',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
+}
+
+export enum InspectionResult {
+  PASS = 'PASS',
+  FAIL = 'FAIL',
+}
+
+export interface Inspection {
+  id: string;
+  extinguisherId: string;
+  scheduledAt: Date;
+  inspectorId: string | null;
+  status: InspectionStatus;
+  result: InspectionResult | null;
+  notes: string | null;
+  createdBy: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// ----------------------------------------------------------------------------
+// Maintenance
+// ----------------------------------------------------------------------------
+
+export interface MaintenanceLog {
+  id: string;
+  extinguisherId: string;
+  actionTaken: string;
+  actionDate: string; // ISO date (YYYY-MM-DD)
+  conditionNoted: string | null;
+  performedBy: string | null;
+  createdAt: Date;
+}
+
+// ----------------------------------------------------------------------------
+// Inspection requests (facility manager → admin workflow)
+// ----------------------------------------------------------------------------
+
+export enum InspectionRequestStatus {
+  PENDING = 'PENDING',
+  REVIEWING = 'REVIEWING',
+  DENIED = 'DENIED',
+  APPROVED = 'APPROVED',
+}
+
+export interface InspectionRequest {
+  id: string;
+  extinguisherId: string;
+  requestedBy: string;
+  preferredAt: Date;
+  notes: string | null;
+  status: InspectionRequestStatus;
+  adminNotes: string | null;
+  inspectorId: string | null;
+  inspectionId: string | null;
+  reviewedBy: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  /** Joined fields for UI */
+  serialNumber?: string;
+  location?: string;
+  requesterName?: string;
+  /** Linked field inspection (only populated when inspection_id is set) */
+  inspectionStatus?: InspectionStatus | null;
+  inspectionResult?: InspectionResult | null;
+  inspectionScheduledAt?: Date | null;
+}
+
+// ----------------------------------------------------------------------------
+// Admin alerts (banner until acknowledged)
+// ----------------------------------------------------------------------------
+
+export enum AdminAlertType {
+  EXPIRY_CRITICAL = 'EXPIRY_CRITICAL',
+  INSPECTION_REQUEST = 'INSPECTION_REQUEST',
+}
+
+export interface AdminAlert {
+  id: string;
+  alertType: AdminAlertType;
+  title: string;
+  message: string;
+  extinguisherId: string | null;
+  requestId: string | null;
+  acknowledgedAt: Date | null;
+  createdAt: Date;
+}
+
+// ----------------------------------------------------------------------------
+// API response envelope & pagination
 // ----------------------------------------------------------------------------
 
 export interface ApiSuccess<T = unknown> {
@@ -114,6 +211,11 @@ export interface ApiError {
 }
 
 export type ApiResponse<T = unknown> = ApiSuccess<T> | ApiError;
+
+export interface PageQuery {
+  page: number;
+  pageSize: number;
+}
 
 export interface Paginated<T> {
   items: T[];

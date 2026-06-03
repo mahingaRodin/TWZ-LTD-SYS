@@ -3,11 +3,10 @@
  */
 
 export const SERVICE_PORTS = {
-  AUTH: 3001,
-  CUSTOMER: 3002,
-  EXTINGUISHER: 3003,
-  NOTIFICATION: 3004,
-  COMPLIANCE: 3005,
+  AUTH: 4001,
+  EXTINGUISHER: 4003,
+  NOTIFICATION: 4004,
+  COMPLIANCE: 4005,
   FRONTEND: 3000,
 } as const;
 
@@ -38,7 +37,9 @@ export const ERROR_CODES = {
   TOKEN_EXPIRED: 'TOKEN_EXPIRED',
   OTP_INVALID: 'OTP_INVALID',
   OTP_EXPIRED: 'OTP_EXPIRED',
+  EMAIL_NOT_VERIFIED: 'EMAIL_NOT_VERIFIED',
   ACCOUNT_INACTIVE: 'ACCOUNT_INACTIVE',
+  RATE_LIMITED: 'RATE_LIMITED',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
 } as const;
 
@@ -57,3 +58,12 @@ export const PAGINATION = {
   DEFAULT_PAGE_SIZE: 20,
   MAX_PAGE_SIZE: 100,
 } as const;
+
+/** Serial format: AE followed by digits (e.g. AE123). */
+export const SERIAL_NUMBER_PATTERN = /^AE\d+$/i;
+
+/** Default password for admin-provisioned accounts. */
+export const DEFAULT_PROVISIONED_PASSWORD = 'user@123';
+
+/** Hours before expiry to treat as critical. */
+export const EXPIRY_CRITICAL_HOURS = 24;
