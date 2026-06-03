@@ -1,0 +1,9 @@
+process.env.NODE_ENV = 'test';
+process.env.JWT_SECRET = 'integration-test-secret';
+process.env.JWT_EXPIRY = '15m';
+process.env.DB_HOST = process.env.DB_HOST ?? 'localhost';
+process.env.DB_PORT = process.env.DB_PORT ?? '5433';
+process.env.DB_USER = process.env.DB_USER ?? 'admin';
+process.env.DB_PASSWORD = process.env.DB_PASSWORD ?? 'admin123';
+process.env.DB_NAME = process.env.TEST_DB_NAME ?? 'fire_extinguisher_test';
+process.env.NOTIFICATION_SERVICE_URL = process.env.NOTIFICATION_SERVICE_URL ?? 'http://localhost:4004';
