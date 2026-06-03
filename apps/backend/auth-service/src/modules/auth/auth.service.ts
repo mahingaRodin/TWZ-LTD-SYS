@@ -12,12 +12,15 @@ import {
   generateOpaqueToken,
   generateOtp,
   hashPassword,
+  otpEmailHtml,
+  passwordResetEmailHtml,
   sha256,
   signAccessToken,
   verifyPassword,
 } from '@fire-system/shared-utils';
-import { env, isProduction } from '../../config/env';
+import { env } from '../../config/env';
 import { logger } from '../../utils/logger';
+import { sendEmail } from '../../utils/notifier';
 import { userRepository } from '../../repositories/user.repository';
 import { otpRepository } from '../../repositories/otp.repository';
 import { refreshTokenRepository } from '../../repositories/refreshToken.repository';
@@ -27,6 +30,7 @@ import type {
   RegisterDto,
   RequestOtpDto,
   ResetPasswordDto,
+  UpdateProfileDto,
   VerifyOtpDto,
 } from './auth.types';
 
@@ -50,31 +54,38 @@ async function issueTokens(user: UserRecord): Promise<AuthTokens> {
   return { accessToken, refreshToken };
 }
 
-/** Create an OTP for the user, persist its hash, and return the plaintext code. */
-async function createOtp(userId: string, purpose: OtpPurpose): Promise<string> {
+/** Create an OTP, persist its hash, email it to the user, and return the code. */
+async function createAndSendOtp(user: UserRecord, purpose: OtpPurpose): Promise<string> {
   const code = generateOtp();
   const expiresAt = new Date(Date.now() + AUTH.OTP_TTL_MINUTES * 60 * 1000);
-  await otpRepository.issue(userId, sha256(code), purpose, expiresAt);
-  // A real deployment hands this to the notification-service. In dev we log it.
-  logger.info(`OTP for ${purpose} issued`, { userId });
+  await otpRepository.issue(user.id, sha256(code), purpose, expiresAt);
+
+  const subject =
+    purpose === OtpPurpose.EMAIL_VERIFICATION ? 'Verify your email' : 'Reset your password';
+  const plain = `Hello ${user.firstName},\n\nYour ${AUTH.OTP_TTL_MINUTES}-minute code is: ${code}\n\nIf you did not request this, ignore this email.`;
+  const html =
+    purpose === OtpPurpose.EMAIL_VERIFICATION
+      ? otpEmailHtml(user.firstName, code, AUTH.OTP_TTL_MINUTES)
+      : passwordResetEmailHtml(user.firstName, code, AUTH.OTP_TTL_MINUTES);
+  await sendEmail(user.email, subject, plain, html);
+  logger.info(`OTP for ${purpose} issued`, { userId: user.id });
   return code;
 }
 
-/** Include the OTP in API responses outside production so flows are testable. */
-function exposeOtp(code: string): string | undefined {
-  return isProduction ? undefined : code;
-}
-
-export interface RegisterResult extends AuthResult {
-  devOtp?: string;
+export interface RegisterResult {
+  user: PublicUser;
+  message: string;
 }
 
 export interface OtpResult {
   message: string;
-  devOtp?: string;
 }
 
 export const authService = {
+  /**
+   * Register a new account and send an email-verification OTP.
+   * The user cannot log in until the email is verified.
+   */
   async register(dto: RegisterDto): Promise<RegisterResult> {
     const existing = await userRepository.findByEmail(dto.email);
     if (existing) {
@@ -82,17 +93,19 @@ export const authService = {
     }
 
     const user = await userRepository.create({
+      firstName: dto.firstName,
+      lastName: dto.lastName,
       email: dto.email,
       passwordHash: await hashPassword(dto.password),
-      fullName: dto.fullName,
-      phone: dto.phone,
-      role: dto.role ?? UserRole.CUSTOMER,
+      // Self-service registration is always a plain USER.
+      role: UserRole.USER,
     });
 
-    const otp = await createOtp(user.id, OtpPurpose.EMAIL_VERIFICATION);
-    const tokens = await issueTokens(user);
-
-    return { user: toPublicUser(user), tokens, devOtp: exposeOtp(otp) };
+    await createAndSendOtp(user, OtpPurpose.EMAIL_VERIFICATION);
+    return {
+      user: toPublicUser(user),
+      message: 'Account created. Check your email for a verification code.',
+    };
   },
 
   async login(dto: LoginDto): Promise<AuthResult> {
@@ -102,6 +115,12 @@ export const authService = {
     }
     if (!user.isActive) {
       throw AppError.unauthorized('Account is inactive', ERROR_CODES.ACCOUNT_INACTIVE);
+    }
+    if (!user.isVerified) {
+      throw AppError.unauthorized(
+        'Email not verified. Please verify your email before logging in.',
+        ERROR_CODES.EMAIL_NOT_VERIFIED,
+      );
     }
 
     const tokens = await issueTokens(user);
@@ -133,8 +152,8 @@ export const authService = {
     const user = await userRepository.findByEmail(dto.email);
     // Do not reveal whether the email exists — respond identically either way.
     if (user) {
-      const code = await createOtp(user.id, dto.purpose);
-      return { message: 'If the account exists, a code has been sent', devOtp: exposeOtp(code) };
+      await createAndSendOtp(user, dto.purpose);
+      return { message: 'If the account exists, a code has been sent' };
     }
     return { message: 'If the account exists, a code has been sent' };
   },
@@ -173,6 +192,11 @@ export const authService = {
     }
     await userRepository.updatePassword(userId, await hashPassword(dto.newPassword));
     await refreshTokenRepository.revokeAllForUser(userId);
+  },
+
+  async updateProfile(userId: string, dto: UpdateProfileDto): Promise<PublicUser> {
+    const updated = await userRepository.updateProfile(userId, dto);
+    return toPublicUser(updated);
   },
 
   async getProfile(userId: string): Promise<PublicUser> {

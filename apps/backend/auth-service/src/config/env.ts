@@ -2,7 +2,7 @@ import path from 'path';
 import dotenv from 'dotenv';
 import { z } from 'zod';
 
-// Load the repo-root .env (services share one env file in this monorepo).
+// Load the repo-root .env (all services share one env file in this monorepo).
 dotenv.config({ path: path.resolve(__dirname, '../../../../../.env') });
 
 const envSchema = z.object({
@@ -17,6 +17,9 @@ const envSchema = z.object({
 
   JWT_SECRET: z.string().min(1).default('dev-only-insecure-secret-change-me'),
   JWT_EXPIRY: z.string().default('15m'),
+
+  // Used to deliver OTP / verification emails via the notification service.
+  NOTIFICATION_SERVICE_URL: z.string().url().default('http://localhost:4004'),
 });
 
 const parsed = envSchema.safeParse(process.env);

@@ -1,15 +1,7 @@
-import { Pool } from 'pg';
-import { env } from '../config/env';
+import { createPool } from '@fire-system/shared-utils';
 
-/** Shared PostgreSQL connection pool for the auth service. */
-export const pool = new Pool({
-  host: env.DB_HOST,
-  port: env.DB_PORT,
-  user: env.DB_USER,
-  password: env.DB_PASSWORD,
-  database: env.DB_NAME,
-  max: 10,
-});
+// Shared PostgreSQL pool for the auth service (built from DB_* env vars).
+export const pool = createPool();
 
 export async function closePool(): Promise<void> {
   await pool.end();

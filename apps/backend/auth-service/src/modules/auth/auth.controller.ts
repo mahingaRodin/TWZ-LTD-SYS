@@ -6,7 +6,7 @@ import { authService } from './auth.service';
 export const authController = {
   async register(req: Request, res: Response): Promise<void> {
     const result = await authService.register(req.body);
-    res.status(HTTP_STATUS.CREATED).json(ok(result, 'Account created'));
+    res.status(HTTP_STATUS.CREATED).json(ok(result, result.message));
   },
 
   async login(req: Request, res: Response): Promise<void> {
@@ -43,6 +43,12 @@ export const authController = {
     if (!req.user) throw AppError.unauthorized();
     await authService.changePassword(req.user.sub, req.body);
     res.status(HTTP_STATUS.OK).json(ok({ changed: true }, 'Password updated'));
+  },
+
+  async updateProfile(req: Request, res: Response): Promise<void> {
+    if (!req.user) throw AppError.unauthorized();
+    const user = await authService.updateProfile(req.user.sub, req.body);
+    res.status(HTTP_STATUS.OK).json(ok(user, 'Profile updated'));
   },
 
   async me(req: Request, res: Response): Promise<void> {

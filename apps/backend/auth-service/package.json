@@ -1,13 +1,13 @@
 {
   "name": "@fire-system/auth-service",
   "version": "1.0.0",
-  "description": "Authentication, JWT, OTP, user management",
+  "description": "Authentication, JWT, OTP email verification, user management",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "jest --runInBand",
+    "test": "pnpm --filter @fire-system/api-tests test -- --testPathPattern=auth",
     "lint": "eslint src/"
   },
   "dependencies": {
@@ -16,9 +16,12 @@
     "dotenv": "^16.3.1",
     "pg": "^8.11.3",
     "zod": "^3.22.4",
+    "axios": "^1.6.2",
+    "swagger-ui-express": "^5.0.0",
     "@fire-system/shared-types": "workspace:*",
     "@fire-system/shared-constants": "workspace:*",
-    "@fire-system/shared-utils": "workspace:*"
+    "@fire-system/shared-utils": "workspace:*",
+    "@fire-system/openapi": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.2.2",
@@ -32,6 +35,7 @@
     "@types/cors": "^2.8.15",
     "@types/node": "^20.8.9",
     "@types/pg": "^8.10.7",
+    "@types/swagger-ui-express": "^4.1.6",
     "eslint": "^8.51.0",
     "@typescript-eslint/eslint-plugin": "^6.7.5",
     "@typescript-eslint/parser": "^6.7.5"
