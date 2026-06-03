@@ -1,7 +1,21 @@
 import app from './app';
+import { env } from './config/env';
+import { logger } from './utils/logger';
+import { closePool } from './db/pool';
+import { startExpiryScanner } from './modules/alerts/expiryScanner';
 
-const PORT = process.env.EXTINGUISHER_SERVICE_PORT || 4003;
-
-app.listen(PORT, () => {
-  console.log(`Fire Extinguisher Service running on port ${PORT}`);
+const server = app.listen(env.EXTINGUISHER_SERVICE_PORT, () => {
+  logger.info(`Extinguisher Service listening on port ${env.EXTINGUISHER_SERVICE_PORT}`);
+  startExpiryScanner();
 });
+
+async function shutdown(signal: string): Promise<void> {
+  logger.info(`Received ${signal}, shutting down gracefully`);
+  server.close(async () => {
+    await closePool();
+    process.exit(0);
+  });
+}
+
+process.on('SIGTERM', () => void shutdown('SIGTERM'));
+process.on('SIGINT', () => void shutdown('SIGINT'));
