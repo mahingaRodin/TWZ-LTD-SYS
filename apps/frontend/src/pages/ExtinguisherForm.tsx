@@ -53,6 +53,15 @@ export function ExtinguisherForm({ initial, onSuccess, onCancel }: Props) {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
+    const today = new Date().toISOString().slice(0, 10);
+    if (expiryDate < today) {
+      setError('Expiry date cannot be in the past.');
+      return;
+    }
+    if (installationDate && expiryDate < installationDate) {
+      setError('Expiry date cannot be before the installation date.');
+      return;
+    }
     setLoading(true);
     try {
       const payload = {
@@ -150,6 +159,7 @@ export function ExtinguisherForm({ initial, onSuccess, onCancel }: Props) {
             required
             className="input-field"
             value={expiryDate}
+            min={installationDate || new Date().toISOString().slice(0, 10)}
             onChange={(e) => setExpiryDate(e.target.value)}
           />
         </div>

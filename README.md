@@ -111,7 +111,7 @@ Every service shares one PostgreSQL database (`fire_extinguisher_system`) and th
 same layered structure (`config → db → repository → service → routes`) with shared
 middleware (JWT auth + RBAC, Zod validation, Helmet, rate limiting, request logging,
 centralized errors) from `@fire-system/shared-utils`. Each service exposes interactive
-**Unified API docs:** [http://localhost:4010/docs](http://localhost:4010/docs) (all services in one Swagger UI). Per-service docs remain at each service’s `/docs`.
+**Unified API docs:** [http://localhost:4010/docs](http://localhost:4010/docs) — all endpoints in one Swagger UI. Use the **Servers** dropdown (top right) to switch between Auth **4001**, Extinguisher **4003**, Notification **4004**, and Compliance **4005**. Per-service docs: `/docs` on each port.
 
 **Roles:** `ADMIN` (manages users & data integrity), `INSPECTOR` (conducts inspections,
 logs results & maintenance), `USER` (views status, schedules inspections).

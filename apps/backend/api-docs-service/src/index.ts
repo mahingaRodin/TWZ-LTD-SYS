@@ -6,11 +6,11 @@ import dotenv from 'dotenv';
 import { z } from 'zod';
 import {
   authOpenApiSpec,
+  buildUnifiedOpenApiSpec,
   complianceOpenApiSpec,
   defaultServiceUrls,
   extinguisherOpenApiSpec,
   notificationOpenApiSpec,
-  swaggerUiUrls,
   withServer,
 } from '@fire-system/openapi';
 import { ok } from '@fire-system/shared-utils';
@@ -27,6 +27,15 @@ const envSchema = z.object({
 
 const env = envSchema.parse(process.env);
 
+const serviceUrls = {
+  auth: env.AUTH_SERVICE_URL,
+  extinguisher: env.EXTINGUISHER_SERVICE_URL,
+  notification: env.NOTIFICATION_SERVICE_URL,
+  compliance: env.COMPLIANCE_SERVICE_URL,
+};
+
+const unifiedSpec = buildUnifiedOpenApiSpec(serviceUrls);
+
 const app = express();
 app.use(cors());
 
@@ -34,32 +43,34 @@ app.get('/health', (_req, res) => {
   res.json(ok({ status: 'ok', service: 'api-docs-service' }));
 });
 
-app.get('/specs/auth.json', (_req, res) => {
-  res.json(withServer(authOpenApiSpec, env.AUTH_SERVICE_URL));
-});
-app.get('/specs/extinguisher.json', (_req, res) => {
-  res.json(withServer(extinguisherOpenApiSpec, env.EXTINGUISHER_SERVICE_URL));
-});
-app.get('/specs/notification.json', (_req, res) => {
-  res.json(withServer(notificationOpenApiSpec, env.NOTIFICATION_SERVICE_URL));
-});
-app.get('/specs/compliance.json', (_req, res) => {
-  res.json(withServer(complianceOpenApiSpec, env.COMPLIANCE_SERVICE_URL));
+app.get('/openapi.json', (_req, res) => {
+  res.json(unifiedSpec);
 });
 
-const swaggerUrls = swaggerUiUrls('');
+app.get('/specs/auth.json', (_req, res) => {
+  res.json(withServer(authOpenApiSpec, serviceUrls.auth));
+});
+app.get('/specs/extinguisher.json', (_req, res) => {
+  res.json(withServer(extinguisherOpenApiSpec, serviceUrls.extinguisher));
+});
+app.get('/specs/notification.json', (_req, res) => {
+  res.json(withServer(notificationOpenApiSpec, serviceUrls.notification));
+});
+app.get('/specs/compliance.json', (_req, res) => {
+  res.json(withServer(complianceOpenApiSpec, serviceUrls.compliance));
+});
 
 app.use(
   '/docs',
   swaggerUi.serve,
-  swaggerUi.setup(null, {
-    customSiteTitle: 'TWZ Ltd — API Documentation',
+  swaggerUi.setup(unifiedSpec, {
+    customSiteTitle: 'TWZ Ltd — Unified API Documentation',
+    explorer: false,
     swaggerOptions: {
-      urls: swaggerUrls,
-      'urls.primaryName': '1 · Auth Service (4001)',
       docExpansion: 'list',
       filter: true,
       persistAuthorization: true,
+      displayRequestDuration: true,
     },
   }),
 );
@@ -70,5 +81,5 @@ app.get('/', (_req, res) => {
 
 app.listen(env.API_DOCS_PORT, () => {
   // eslint-disable-next-line no-console
-  console.log(`API docs hub: http://localhost:${env.API_DOCS_PORT}/docs`);
+  console.log(`Unified API docs: http://localhost:${env.API_DOCS_PORT}/docs`);
 });

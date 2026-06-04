@@ -64,6 +64,20 @@ describe('Extinguisher Service endpoints', () => {
       expect(removed.status).toBe(200);
     });
 
+    it('rejects expiry date before installation date', async () => {
+      const token = await adminToken();
+      const res = await request(extApp)
+        .post('/api/extinguishers')
+        .set('Authorization', `Bearer ${token}`)
+        .send({
+          ...extinguisherPayload,
+          serialNumber: 'AE9002',
+          installationDate: '2026-06-03',
+          expiryDate: '2026-06-01',
+        });
+      expect(res.status).toBe(400);
+    });
+
     it('blocks facility user from create', async () => {
       const token = await facilityToken();
       const res = await request(extApp)

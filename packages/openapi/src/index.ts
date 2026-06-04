@@ -3,6 +3,7 @@ export { authOpenApiSpec } from './auth.openapi';
 export { extinguisherOpenApiSpec } from './extinguisher.openapi';
 export { complianceOpenApiSpec } from './compliance.openapi';
 export { notificationOpenApiSpec } from './notification.openapi';
+export { buildUnifiedOpenApiSpec } from './merged.openapi';
 
 export interface ApiDocsServiceUrls {
   auth: string;
