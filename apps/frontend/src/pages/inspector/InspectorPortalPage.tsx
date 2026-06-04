@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ClipboardCheck, Wrench } from 'lucide-react';
 import {
   InspectionResult,
@@ -7,14 +7,14 @@ import {
   type Extinguisher,
   type Inspection,
 } from '@fire-system/shared-types';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Alert } from '@/components/Alert';
 import { InspectionDashboardStats } from '@/components/InspectionDashboardStats';
 import { InspectionListCard } from '@/components/InspectionListCard';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { Pagination } from '@/components/Pagination';
 import { Modal } from '@/components/Modal';
-import { useToast } from '@/components/Toast';
+import { refreshInspectorAlerts, useToast } from '@/components/Toast';
 import * as extApi from '@/api/extinguishers';
 import * as inspectionsApi from '@/api/inspections';
 import { getErrorMessage } from '@/lib/errors';
@@ -24,6 +24,9 @@ import { DEFAULT_PAGE_SIZE } from '@/lib/pagination';
 import { useAppSelector } from '@/store/hooks';
 
 export function InspectorPortalPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const focusId = searchParams.get('focus');
+  const focusHandled = useRef<string | null>(null);
   const user = useAppSelector((s) => s.auth.user);
   const [items, setItems] = useState<Inspection[]>([]);
   const [extinguishers, setExtinguishers] = useState<Extinguisher[]>([]);
@@ -63,6 +66,38 @@ export function InspectorPortalPage() {
   useEffect(() => {
     if (user?.role === UserRole.INSPECTOR) load();
   }, [load, user]);
+
+  const clearFocusParam = () => {
+    if (!searchParams.has('focus')) return;
+    const next = new URLSearchParams(searchParams);
+    next.delete('focus');
+    setSearchParams(next, { replace: true });
+  };
+
+  useEffect(() => {
+    if (!focusId || focusHandled.current === focusId) return;
+
+    const openFocused = async () => {
+      const onPage = items.find((i) => i.id === focusId);
+      if (onPage) {
+        setCompleteTarget(onPage);
+        focusHandled.current = focusId;
+        return;
+      }
+      if (loading) return;
+      try {
+        const insp = await inspectionsApi.getInspection(focusId);
+        if (insp.status === InspectionStatus.SCHEDULED) {
+          setCompleteTarget(insp);
+          focusHandled.current = focusId;
+        }
+      } catch {
+        focusHandled.current = focusId;
+      }
+    };
+
+    void openFocused();
+  }, [focusId, items, loading]);
 
   return (
     <div className="space-y-6">
@@ -130,9 +165,14 @@ export function InspectorPortalPage() {
       )}
       <CompleteModal
         inspection={completeTarget}
-        onClose={() => setCompleteTarget(null)}
+        onClose={() => {
+          setCompleteTarget(null);
+          clearFocusParam();
+        }}
         onDone={() => {
           setCompleteTarget(null);
+          clearFocusParam();
+          refreshInspectorAlerts();
           load();
         }}
       />
@@ -170,6 +210,7 @@ function CompleteModal({
     setError('');
     try {
       await inspectionsApi.completeInspection(inspection.id, result, notes || undefined);
+      refreshInspectorAlerts();
       toast.success('Inspection completed', 'Log maintenance for this unit next.');
       onDone();
 

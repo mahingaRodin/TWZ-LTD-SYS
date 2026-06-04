@@ -67,3 +67,9 @@ export const DEFAULT_PROVISIONED_PASSWORD = 'user@123';
 
 /** Hours before expiry to treat as critical. */
 export const EXPIRY_CRITICAL_HOURS = 24;
+
+/** Hours before scheduled inspection time to warn inspectors (no outcome logged). */
+export const INSPECTION_DUE_HOURS = 24;
+
+/** Hours before scheduled inspection time to warn the assigned inspector. */
+export const INSPECTION_DUE_SOON_HOURS = 24;

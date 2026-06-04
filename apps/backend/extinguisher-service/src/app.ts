@@ -13,6 +13,7 @@ import { inspectionRouter } from './modules/inspection/inspection.routes';
 import { maintenanceRouter } from './modules/maintenance/maintenance.routes';
 import { inspectionRequestRouter } from './modules/inspection-request/inspection-request.routes';
 import { alertRouter } from './modules/alerts/alert.routes';
+import { inspectorAlertRouter } from './modules/alerts/inspector-alert.routes';
 import { logger } from './utils/logger';
 import { openApiSpec } from './docs/swagger';
 
@@ -34,6 +35,7 @@ app.use('/api/inspections', inspectionRouter);
 app.use('/api/maintenance', maintenanceRouter);
 app.use('/api/inspection-requests', inspectionRequestRouter);
 app.use('/api/alerts', alertRouter);
+app.use('/api/inspector-alerts', inspectorAlertRouter);
 
 app.use(notFoundHandler);
 app.use(createErrorHandler(logger));

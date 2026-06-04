@@ -243,6 +243,41 @@ export function expiryCriticalEmailHtml(
   );
 }
 
+export function inspectionDueSoonEmailHtml(
+  inspectorName: string,
+  serial: string,
+  location: string,
+  scheduledLabel: string,
+  overdue: boolean,
+  viewUrl?: string,
+): string {
+  const safeName = escapeHtml(inspectorName);
+  const safeSerial = escapeHtml(serial);
+  const safeLocation = escapeHtml(location);
+  const safeWhen = escapeHtml(scheduledLabel);
+  const href = viewUrl?.trim() ? escapeHtml(viewUrl.trim()) : '';
+  const headline = overdue ? 'Inspection overdue' : 'Inspection due within 24 hours';
+  const lead = overdue
+    ? `Your scheduled visit for <strong style="color:${brand.text};">${safeSerial}</strong> was due at ${safeWhen}.`
+    : `Your visit for <strong style="color:${brand.text};">${safeSerial}</strong> at ${safeLocation} is due by ${safeWhen} (less than 24 hours).`;
+  const ctaBlock = href
+    ? `<table cellpadding="0" cellspacing="0" style="margin:24px 0 8px;">
+         <tr><td style="border-radius:8px;background:${brand.secondary};">
+           <a href="${href}" style="display:inline-block;padding:14px 28px;color:#101418;font-size:14px;font-weight:700;text-decoration:none;">Open assignment</a>
+         </td></tr>
+       </table>
+       <p style="margin:0;color:${brand.muted};font-size:12px;">Record pass/fail on the assignment — the reminder clears once you submit an outcome.</p>`
+    : '';
+
+  return layout(
+    headline,
+    `<p style="color:${brand.muted};line-height:1.6;">Hello <strong style="color:${brand.text};">${safeName}</strong>,</p>
+     <p style="color:${brand.muted};line-height:1.6;">${lead}</p>
+     <p style="color:${brand.muted};font-size:13px;">No inspection outcome has been logged yet.</p>
+     ${ctaBlock}`,
+  );
+}
+
 export function newInspectionRequestAdminEmailHtml(
   requester: string,
   serial: string,

@@ -192,6 +192,25 @@ export interface AdminAlert {
 }
 
 // ----------------------------------------------------------------------------
+// Inspector alerts (banner until inspection is actioned)
+// ----------------------------------------------------------------------------
+
+export enum InspectorAlertType {
+  INSPECTION_DUE_SOON = 'INSPECTION_DUE_SOON',
+}
+
+export interface InspectorAlert {
+  id: string;
+  alertType: InspectorAlertType;
+  title: string;
+  message: string;
+  inspectionId: string;
+  inspectorId: string;
+  acknowledgedAt: Date | null;
+  createdAt: Date;
+}
+
+// ----------------------------------------------------------------------------
 // API response envelope & pagination
 // ----------------------------------------------------------------------------
 

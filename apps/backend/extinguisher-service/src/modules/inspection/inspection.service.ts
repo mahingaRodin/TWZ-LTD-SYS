@@ -12,6 +12,7 @@ import {
 import { extinguisherRepository } from '../extinguisher/extinguisher.repository';
 import { env } from '../../config/env';
 import { notify } from '../../utils/notifier';
+import { inspectorAlertRepository } from '../alerts/inspector-alert.repository';
 import {
   CreateInspectionInput,
   InspectionListFilters,
@@ -94,6 +95,7 @@ export const inspectionService = {
       throw AppError.badRequest('Inspection not found or is not in a SCHEDULED state');
     }
     await refreshExtinguisherStatusAfterInspection(updated.extinguisherId);
+    await inspectorAlertRepository.resolveByInspectionId(updated.id);
     return updated;
   },
 
@@ -103,6 +105,7 @@ export const inspectionService = {
       throw AppError.badRequest('Inspection not found or is not in a SCHEDULED state');
     }
     await refreshExtinguisherStatusAfterInspection(updated.extinguisherId);
+    await inspectorAlertRepository.resolveByInspectionId(updated.id);
     return updated;
   },
 };

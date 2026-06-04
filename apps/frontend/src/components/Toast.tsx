@@ -22,6 +22,10 @@ export function refreshAdminAlerts(): void {
   window.dispatchEvent(new Event('twz:alerts-refresh'));
 }
 
+export function refreshInspectorAlerts(): void {
+  window.dispatchEvent(new Event('twz:inspector-alerts-refresh'));
+}
+
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 

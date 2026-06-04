@@ -16,6 +16,7 @@ import {
 import { UserRole } from '@fire-system/shared-types';
 import { Logo } from './Logo';
 import { AdminAlertBanner } from './AdminAlertBanner';
+import { InspectorAlertBanner } from './InspectorAlertBanner';
 import { MustChangePasswordBanner } from './MustChangePasswordBanner';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { logout as logoutAction } from '@/store/authSlice';
@@ -130,6 +131,7 @@ export function AppLayout() {
       )}
       <div className="flex min-w-0 flex-1 flex-col">
         <AdminAlertBanner />
+        <InspectorAlertBanner />
         <MustChangePasswordBanner />
         <header className="sticky top-0 z-30 flex items-center justify-between border-b border-border bg-surface/90 px-4 py-3 backdrop-blur-glass lg:px-8">
           <button type="button" className="btn-ghost p-2 lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Open menu">

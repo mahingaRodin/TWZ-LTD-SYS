@@ -19,6 +19,7 @@ import { getErrorMessage } from '@/lib/errors';
 import { DEFAULT_PAGE_SIZE } from '@/lib/pagination';
 import { canEditExtinguishers, canManageExtinguishers, isExtinguisherReadOnly } from '@/lib/roles';
 import { useAppSelector } from '@/store/hooks';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { ExtinguisherForm } from './ExtinguisherForm';
 
 export function ExtinguishersPage() {
@@ -37,6 +38,8 @@ export function ExtinguishersPage() {
   const [error, setError] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Extinguisher | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Extinguisher | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const toast = useToast();
   const readOnly = isExtinguisherReadOnly(role);
   const canEdit = canEditExtinguishers(role);
@@ -100,14 +103,18 @@ export function ExtinguishersPage() {
     setSearchParams(next, { replace: true });
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Remove this extinguisher record?')) return;
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
     try {
-      await extApi.deleteExtinguisher(id);
-      toast.success('Extinguisher removed', 'The unit was deleted from the registry.');
+      await extApi.deleteExtinguisher(deleteTarget.id);
+      toast.success('Extinguisher removed', `${deleteTarget.serialNumber} was deleted from the registry.`);
+      setDeleteTarget(null);
       load();
     } catch (e) {
       setError(getErrorMessage(e));
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -241,7 +248,7 @@ export function ExtinguishersPage() {
                             <button
                               type="button"
                               className="btn-ghost text-xs text-danger"
-                              onClick={() => handleDelete(ex.id)}
+                              onClick={() => setDeleteTarget(ex)}
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
@@ -302,6 +309,20 @@ export function ExtinguishersPage() {
           />
         </>
       )}
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => void confirmDelete()}
+        title="Delete extinguisher?"
+        description={
+          deleteTarget
+            ? `Permanently remove ${deleteTarget.serialNumber} (${deleteTarget.location})? Inspection and maintenance history for this unit will also be removed.`
+            : ''
+        }
+        confirmLabel="Delete unit"
+        loading={deleteLoading}
+      />
 
       <Modal
         open={modalOpen}

@@ -34,6 +34,11 @@ export async function getInspectionStats(assignedToMe?: boolean): Promise<Inspec
   return unwrap(res);
 }
 
+export async function getInspection(id: string): Promise<Inspection> {
+  const res = await api.get<ApiResponse<Inspection>>(`/api/inspections/${id}`);
+  return unwrap(res);
+}
+
 export async function listInspections(
   filters: InspectionFilters = {},
 ): Promise<Paginated<Inspection>> {

@@ -3,6 +3,7 @@ import { Pencil, Trash2, UserPlus } from 'lucide-react';
 import { UserRole, type PublicUser } from '@fire-system/shared-types';
 import { Alert } from '@/components/Alert';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { Modal } from '@/components/Modal';
 import { Pagination } from '@/components/Pagination';
 import { AccountBadge } from '@/components/AccountBadge';
@@ -22,6 +23,8 @@ export function UsersPage() {
   const [error, setError] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
   const [editUser, setEditUser] = useState<PublicUser | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<PublicUser | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const toast = useToast();
 
   const load = useCallback(async () => {
@@ -47,15 +50,18 @@ export function UsersPage() {
     load();
   }, [load]);
 
-  const handleDelete = async (user: PublicUser) => {
-    const label = `${user.firstName} ${user.lastName} (${user.email})`;
-    if (!confirm(`Permanently delete ${label}? This cannot be undone.`)) return;
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
     try {
-      await usersApi.deleteUser(user.id);
-      toast.success('User deleted', `${user.firstName} ${user.lastName} was removed.`);
+      await usersApi.deleteUser(deleteTarget.id);
+      toast.success('User deleted', `${deleteTarget.firstName} ${deleteTarget.lastName} was removed.`);
+      setDeleteTarget(null);
       load();
     } catch (e) {
       setError(getErrorMessage(e));
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -140,7 +146,7 @@ export function UsersPage() {
                           <button
                             type="button"
                             className="btn-ghost inline-flex items-center gap-1 text-xs py-1 text-danger hover:text-danger"
-                            onClick={() => handleDelete(u)}
+                            onClick={() => setDeleteTarget(u)}
                           >
                             <Trash2 className="h-3.5 w-3.5" /> Delete
                           </button>
@@ -179,6 +185,20 @@ export function UsersPage() {
           load();
           toast.success('User updated', 'Account details were saved.');
         }}
+      />
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => void confirmDelete()}
+        title="Delete user account?"
+        description={
+          deleteTarget
+            ? `Permanently remove ${deleteTarget.firstName} ${deleteTarget.lastName} (${deleteTarget.email})? This cannot be undone.`
+            : ''
+        }
+        confirmLabel="Delete user"
+        loading={deleteLoading}
       />
     </div>
   );
@@ -288,6 +308,7 @@ function EditUserModal({
   const [isVerified, setIsVerified] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -304,8 +325,7 @@ function EditUserModal({
     setError('');
   }, [user]);
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+  const persist = async () => {
     if (!user) return;
     setError('');
     setLoading(true);
@@ -318,12 +338,19 @@ function EditUserModal({
         isActive,
         isVerified,
       });
+      setConfirmOpen(false);
       onSuccess();
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    setConfirmOpen(true);
   };
 
   return (
@@ -392,9 +419,24 @@ function EditUserModal({
           </label>
         </div>
         <button type="submit" className="btn-primary w-full" disabled={loading}>
-          {loading ? 'Saving…' : 'Save changes'}
+          Save changes
         </button>
       </form>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={() => void persist()}
+        title="Save user changes?"
+        description={
+          user
+            ? `Update ${user.firstName} ${user.lastName} (${user.email})? Role, active status, and verification will change immediately.`
+            : ''
+        }
+        confirmLabel="Save changes"
+        variant="primary"
+        loading={loading}
+      />
     </Modal>
   );
 }
