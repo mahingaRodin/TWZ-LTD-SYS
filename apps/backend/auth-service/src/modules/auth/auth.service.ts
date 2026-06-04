@@ -63,11 +63,17 @@ async function createAndSendOtp(user: UserRecord, purpose: OtpPurpose): Promise<
   const subject =
     purpose === OtpPurpose.EMAIL_VERIFICATION ? 'Verify your email' : 'Reset your password';
   const plain = `Hello ${user.firstName},\n\nYour ${AUTH.OTP_TTL_MINUTES}-minute code is: ${code}\n\nIf you did not request this, ignore this email.`;
+  const resetUrl =
+    purpose === OtpPurpose.PASSWORD_RESET
+      ? `${env.FRONTEND_URL.replace(/\/$/, '')}/reset-password?email=${encodeURIComponent(user.email)}`
+      : undefined;
   const html =
     purpose === OtpPurpose.EMAIL_VERIFICATION
       ? otpEmailHtml(user.firstName, code, AUTH.OTP_TTL_MINUTES)
-      : passwordResetEmailHtml(user.firstName, code, AUTH.OTP_TTL_MINUTES);
-  await sendEmail(user.email, subject, plain, html);
+      : passwordResetEmailHtml(user.firstName, code, AUTH.OTP_TTL_MINUTES, resetUrl);
+  const plainWithLink =
+    resetUrl != null ? `${plain}\n\nReset your password: ${resetUrl}` : plain;
+  await sendEmail(user.email, subject, plainWithLink, html);
   logger.info(`OTP for ${purpose} issued`, { userId: user.id });
   return code;
 }

@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Plus, Search, Trash2 } from 'lucide-react';
 import {
   ExtinguisherStatus,
@@ -22,6 +22,9 @@ import { useAppSelector } from '@/store/hooks';
 import { ExtinguisherForm } from './ExtinguisherForm';
 
 export function ExtinguishersPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const focusId = searchParams.get('focus');
+  const focusHandled = useRef<string | null>(null);
   const role = useAppSelector((s) => s.auth.user?.role ?? UserRole.USER);
   const [items, setItems] = useState<Extinguisher[]>([]);
   const [page, setPage] = useState(1);
@@ -62,6 +65,40 @@ export function ExtinguishersPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (!focusId || focusHandled.current === focusId) return;
+
+    const openFocused = async () => {
+      const onPage = items.find((ex) => ex.id === focusId);
+      if (onPage) {
+        setEditing(onPage);
+        setModalOpen(true);
+        focusHandled.current = focusId;
+        document.getElementById(`ext-${focusId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+      if (loading) return;
+      try {
+        const ex = await extApi.getExtinguisher(focusId);
+        setEditing(ex);
+        setModalOpen(true);
+        focusHandled.current = focusId;
+      } catch {
+        toast.error('Unit not found', 'This extinguisher may have been removed.');
+        focusHandled.current = focusId;
+      }
+    };
+
+    void openFocused();
+  }, [focusId, items, loading, toast]);
+
+  const clearFocusParam = () => {
+    if (!searchParams.has('focus')) return;
+    const next = new URLSearchParams(searchParams);
+    next.delete('focus');
+    setSearchParams(next, { replace: true });
+  };
 
   const handleDelete = async (id: string) => {
     if (!confirm('Remove this extinguisher record?')) return;
@@ -173,7 +210,13 @@ export function ExtinguishersPage() {
               </thead>
               <tbody>
                 {items.map((ex) => (
-                  <tr key={ex.id} className="border-b border-border/60 hover:bg-surface/50">
+                  <tr
+                    key={ex.id}
+                    id={`ext-${ex.id}`}
+                    className={`border-b border-border/60 hover:bg-surface/50 ${
+                      focusId === ex.id ? 'bg-primary/10 ring-1 ring-inset ring-primary/40' : ''
+                    }`}
+                  >
                     <td className="px-4 py-3 font-medium">{ex.serialNumber}</td>
                     <td className="px-4 py-3 text-muted">{ex.location}</td>
                     <td className="px-4 py-3">{ex.type}</td>
@@ -262,7 +305,10 @@ export function ExtinguishersPage() {
 
       <Modal
         open={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={() => {
+          setModalOpen(false);
+          clearFocusParam();
+        }}
         title={editing ? 'Update Extinguisher' : 'Register Extinguisher'}
         wide
       >
@@ -270,9 +316,13 @@ export function ExtinguishersPage() {
           initial={editing}
           onSuccess={() => {
             setModalOpen(false);
+            clearFocusParam();
             load();
           }}
-          onCancel={() => setModalOpen(false)}
+          onCancel={() => {
+            setModalOpen(false);
+            clearFocusParam();
+          }}
         />
       </Modal>
     </div>

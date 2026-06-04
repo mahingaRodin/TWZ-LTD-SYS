@@ -56,15 +56,32 @@ export function otpEmailHtml(firstName: string, code: string, minutes: number): 
   );
 }
 
-export function passwordResetEmailHtml(firstName: string, code: string, minutes: number): string {
+export function passwordResetEmailHtml(
+  firstName: string,
+  code: string,
+  minutes: number,
+  resetUrl?: string,
+): string {
+  const safeName = escapeHtml(firstName);
+  const href = resetUrl?.trim() ? escapeHtml(resetUrl.trim()) : '';
+  const ctaBlock = href
+    ? `<table cellpadding="0" cellspacing="0" style="margin:24px 0 8px;">
+         <tr><td style="border-radius:8px;background:${brand.primary};">
+           <a href="${href}" style="display:inline-block;padding:14px 28px;color:#fff;font-size:14px;font-weight:700;text-decoration:none;">Set new password</a>
+         </td></tr>
+       </table>
+       <p style="margin:0;color:${brand.muted};font-size:12px;">Enter the code below on that page, then choose and confirm your new password.</p>`
+    : `<p style="color:${brand.muted};font-size:12px;">Sign in to the portal and open the reset password page to enter this code.</p>`;
+
   return layout(
     'Reset your password',
-    `<p style="color:${brand.muted};line-height:1.6;">Hello ${firstName},</p>
-     <p style="color:${brand.muted};">Your password reset code:</p>
+    `<p style="color:${brand.muted};line-height:1.6;">Hello <strong style="color:${brand.text};">${safeName}</strong>,</p>
+     <p style="color:${brand.muted};">Use the button below or enter this code on the reset page:</p>
+     ${ctaBlock}
      <p style="text-align:center;margin:24px 0;">
        <span style="display:inline-block;background:#0b0f12;border:2px solid ${brand.primary};border-radius:8px;padding:16px 32px;font-size:28px;font-weight:700;letter-spacing:8px;color:${brand.primary};">${code}</span>
      </p>
-     <p style="color:${brand.muted};font-size:13px;">Valid for ${minutes} minutes.</p>`,
+     <p style="color:${brand.muted};font-size:13px;">Valid for ${minutes} minutes. If you did not request this, ignore this email.</p>`,
   );
 }
 
@@ -199,12 +216,30 @@ export function inspectionRequestStatusEmailHtml(
   );
 }
 
-export function expiryCriticalEmailHtml(serial: string, location: string, expiryDate: string): string {
+export function expiryCriticalEmailHtml(
+  serial: string,
+  location: string,
+  expiryDate: string,
+  viewUrl?: string,
+): string {
+  const safeSerial = escapeHtml(serial);
+  const safeLocation = escapeHtml(location);
+  const safeExpiry = escapeHtml(expiryDate);
+  const href = viewUrl?.trim() ? escapeHtml(viewUrl.trim()) : '';
+  const ctaBlock = href
+    ? `<table cellpadding="0" cellspacing="0" style="margin:24px 0 8px;">
+         <tr><td style="border-radius:8px;background:${brand.primary};">
+           <a href="${href}" style="display:inline-block;padding:14px 28px;color:#fff;font-size:14px;font-weight:700;text-decoration:none;">View extinguisher</a>
+         </td></tr>
+       </table>
+       <p style="margin:0;color:${brand.muted};font-size:12px;">Update maintenance, extend expiry, or decommission the unit, then dismiss the in-app alert.</p>`
+    : `<p style="color:${brand.muted};">Open Admin Portal → Fire Extinguishers, locate <strong style="color:${brand.text};">${safeSerial}</strong>, and take action.</p>`;
+
   return layout(
     'CRITICAL: Extinguisher expiring within 24 hours',
     `<p style="color:${brand.primary};font-weight:600;">Immediate attention required</p>
-     <p style="color:${brand.muted};">Unit <strong style="color:${brand.text}">${serial}</strong> at ${location} expires on <strong>${expiryDate}</strong>.</p>
-     <p style="color:${brand.muted};">Review in the Admin Portal and acknowledge the alert after action.</p>`,
+     <p style="color:${brand.muted};">Unit <strong style="color:${brand.text};">${safeSerial}</strong> at ${safeLocation} expires on <strong>${safeExpiry}</strong>.</p>
+     ${ctaBlock}`,
   );
 }
 

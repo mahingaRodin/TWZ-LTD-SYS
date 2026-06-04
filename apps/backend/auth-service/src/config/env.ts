@@ -20,6 +20,7 @@ const envSchema = z.object({
 
   // Used to deliver OTP / verification emails via the notification service.
   NOTIFICATION_SERVICE_URL: z.string().url().default('http://localhost:4004'),
+  FRONTEND_URL: z.string().url().default('http://localhost:3000'),
 });
 
 const parsed = envSchema.safeParse(process.env);

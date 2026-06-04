@@ -1,6 +1,7 @@
 import { AdminAlertType } from '@fire-system/shared-types';
 import { EXPIRY_CRITICAL_HOURS } from '@fire-system/shared-constants';
 import { expiryCriticalEmailHtml } from '@fire-system/shared-utils';
+import { env } from '../../config/env';
 import { pool } from '../../db/pool';
 import { notify } from '../../utils/notifier';
 import { logger } from '../../utils/logger';
@@ -46,9 +47,11 @@ export async function scanExpiryCritical(): Promise<void> {
       extinguisherId: ex.id,
     });
 
+    const base = env.FRONTEND_URL.replace(/\/$/, '');
+    const viewUrl = `${base}/app/extinguishers?focus=${ex.id}`;
     const subject = `[CRITICAL] Extinguisher ${ex.serial_number} expiring within ${EXPIRY_CRITICAL_HOURS}h`;
-    const plain = `${ex.serial_number} at ${ex.location} expires on ${ex.expiry_date}. Review the Admin Portal.`;
-    const html = expiryCriticalEmailHtml(ex.serial_number, ex.location, ex.expiry_date);
+    const plain = `${ex.serial_number} at ${ex.location} expires on ${ex.expiry_date}. View unit: ${viewUrl}`;
+    const html = expiryCriticalEmailHtml(ex.serial_number, ex.location, ex.expiry_date, viewUrl);
     for (const email of admins) {
       await notify(email, subject, plain, html);
     }

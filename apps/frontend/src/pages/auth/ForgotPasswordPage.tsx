@@ -19,7 +19,7 @@ export function ForgotPasswordPage() {
     setLoading(true);
     try {
       await authApi.requestOtp(email, OtpPurpose.PASSWORD_RESET);
-      toast.info('Check your email', 'A reset code was sent to your inbox.');
+      toast.info('Check your email', 'Open the reset link or use the code we sent you.');
       navigate('/reset-password', { state: { email } });
     } catch (err) {
       setError(getErrorMessage(err, 'Request failed'));
@@ -31,7 +31,9 @@ export function ForgotPasswordPage() {
   return (
     <>
       <h1 className="text-3xl font-bold">Reset Password</h1>
-      <p className="mt-2 text-sm text-muted">We will send a one-time code to your email.</p>
+      <p className="mt-2 text-sm text-muted">
+        Enter your email. We send a secure link and a one-time code so you can set a new password.
+      </p>
 
       {error && (
         <div className="mt-6">

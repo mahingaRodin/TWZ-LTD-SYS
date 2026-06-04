@@ -41,11 +41,17 @@ export function AdminAlertBanner() {
     navigate(`/app/inspection-requests?review=${requestId}`);
   };
 
+  const openExtinguisher = (extinguisherId: string) => {
+    navigate(`/app/extinguishers?focus=${extinguisherId}`);
+  };
+
   return (
     <div className="space-y-1 border-b border-primary/40 bg-primary/10">
       {alerts.map((a) => {
         const isRequestAlert =
           a.alertType === AdminAlertType.INSPECTION_REQUEST && !!a.requestId;
+        const isExpiryAlert =
+          a.alertType === AdminAlertType.EXPIRY_CRITICAL && !!a.extinguisherId;
 
         return (
           <div
@@ -69,6 +75,16 @@ export function AdminAlertBanner() {
                   onClick={() => openInspectionRequest(a.requestId!)}
                 >
                   View request
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+              )}
+              {isExpiryAlert && (
+                <button
+                  type="button"
+                  className="btn-secondary flex items-center gap-1 text-xs py-1.5 px-3"
+                  onClick={() => openExtinguisher(a.extinguisherId!)}
+                >
+                  View unit
                   <ChevronRight className="h-3.5 w-3.5" />
                 </button>
               )}
